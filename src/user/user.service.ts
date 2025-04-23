@@ -30,15 +30,122 @@ export class UserService {
   }
 
   async findOne(id: number) {
-    return `This action returns a #${id} user`;
+    try {
+      const userData = await this.prisma.user.findUnique({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          username: true,
+          created_at: true,
+          updated_at: true,
+        },
+        where: {
+          id,
+          deleted_at: null,
+        },
+      });
+
+      if (!userData) throw new BadRequestException('User not found!');
+
+      return userData;
+    } catch (error) {
+      throwError(error);
+    }
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+    try {
+      const userData = await this.prisma.user.findUnique({
+        where: {
+          id,
+          deleted_at: null,
+        },
+      });
+
+      if (!userData) throw new BadRequestException('User not found!');
+
+      const { email, name, password, username } = updateUserDto;
+      const hashPassword = await bcrypt.hash(password, 10);
+
+      const updateUser = await this.prisma.user.update({
+        data: {
+          email,
+          name,
+          username,
+          password: hashPassword,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          username: true,
+          created_at: true,
+          updated_at: true,
+        },
+        where: {
+          id: userData.id,
+          deleted_at: null,
+        },
+      });
+
+      return updateUser;
+    } catch (error) {
+      throwError(error);
+    }
   }
 
   async remove(id: number) {
-    return `This action removes a #${id} user`;
+    try {
+      const userData = await this.prisma.user.findUnique({
+        where: {
+          id,
+          deleted_at: null,
+        },
+      });
+
+      if (!userData) throw new BadRequestException('User not found!');
+
+      await this.prisma.user.update({
+        data: {
+          deleted_at: new Date(),
+        },
+        where: { id },
+      });
+
+      return {
+        name: userData.name,
+        username: userData.username,
+        email: userData.email,
+      };
+    } catch (error) {
+      throwError(error);
+    }
+  }
+
+  async findByUsernameOrEmail(data: string) {
+    try {
+      const userData = await this.prisma.user.findFirst({
+        where: {
+          OR: [
+            {
+              username: {
+                equals: data,
+              },
+            },
+            {
+              email: {
+                equals: data,
+              },
+            },
+          ],
+        },
+      });
+
+      return userData;
+    } catch (error) {
+      throwError(error);
+    }
   }
 
   private async validateUser(dataUser) {

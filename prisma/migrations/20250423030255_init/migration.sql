@@ -17,7 +17,11 @@ CREATE TABLE "user_auth" (
     "id" BIGSERIAL NOT NULL,
     "user_id" BIGINT NOT NULL,
     "refresh_token" VARCHAR(255) NOT NULL,
-    "status" BOOLEAN NOT NULL,
+    "is_active" BOOLEAN NOT NULL,
+    "jti" VARCHAR(255) NOT NULL,
+    "expires_at" TIMESTAMP(0),
+    "device_info" VARCHAR(255),
+    "ip_address" VARCHAR(255),
     "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3),
     "deleted_at" TIMESTAMP(0),
@@ -46,6 +50,15 @@ CREATE TABLE "user_roles" (
 
     CONSTRAINT "user_roles_pkey" PRIMARY KEY ("user_id","role_id")
 );
+
+-- CreateIndex
+CREATE INDEX "user_auth_user_id_idx" ON "user_auth"("user_id");
+
+-- CreateIndex
+CREATE INDEX "user_auth_jti_idx" ON "user_auth"("jti");
+
+-- CreateIndex
+CREATE INDEX "user_auth_refresh_token_idx" ON "user_auth"("refresh_token");
 
 -- AddForeignKey
 ALTER TABLE "user_auth" ADD CONSTRAINT "user_auth_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

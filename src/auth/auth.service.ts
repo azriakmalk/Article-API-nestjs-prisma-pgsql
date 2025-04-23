@@ -1,42 +1,47 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { throwError } from 'src/common/utils/throw-error.util';
+import { UserService } from 'src/user/user.service';
+import * as bcrypt from 'bcrypt';
+import { LoginDto } from './auth.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { TokenService } from './token.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly userService: UserService,
+    private readonly prisma: PrismaService,
+    private readonly tokenService: TokenService,
+  ) {}
 
-  private readonly users = [
-    {
-      userId: 1,
-      username: 'john',
-      password: 'changeme',
-    },
-    {
-      userId: 2,
-      username: 'maria',
-      password: 'guess',
-    },
-  ];
-
-  async login(username: string, pass: string) {
+  async login(req: Request, loginDto: LoginDto) {
     try {
-      const user = this.users.find((user) => user.username === username);
+      const user = await this.userService.findByUsernameOrEmail(
+        loginDto.username,
+      );
 
-      if (user?.password !== pass) {
-        throw new UnauthorizedException();
+      if (!user) {
+        throw new BadRequestException('Invalid user / password');
       }
 
-      const payload = { userId: user.userId, username: user.username };
+      const checkPassword = await bcrypt.compare(
+        loginDto.password,
+        user.password,
+      );
+
+      if (!checkPassword) {
+        throw new UnauthorizedException('Invalid user / password');
+      }
+
       const data = {
-        access_token: this.jwtService.sign(payload, {
-          expiresIn: '15m',
-          secret: process.env.JWT_ACCESS_SECRET,
-        }),
-        refresh_token: this.jwtService.sign(payload, {
-          expiresIn: '7d',
-          secret: process.env.JWT_REFRESH_SECRET,
-        }),
+        access_token: this.tokenService.generateAccessToken(user),
+        refresh_token: this.tokenService.generateRefreshToken(req, user),
       };
 
       return data;
@@ -45,18 +50,57 @@ export class AuthService {
     }
   }
 
-  async refres(refresh_token: string) {
+  async refresh(req: Request) {
     try {
+      const jti = req['user']['jti'];
+      const validateToken = await this.prisma.user_auth.findFirst({
+        include: { user: true },
+        where: {
+          jti,
+          is_active: true,
+          deleted_at: null,
+        },
+      });
+
+      if (!validateToken) throw new UnauthorizedException('Invalid token!');
+
       const data = {
-        refresh_token: this.jwtService.sign(
-          {},
-          {
-            expiresIn: '7d',
-            secret: process.env.JWT_REFRESH_SECRET,
-          },
+        access_token: this.tokenService.generateAccessToken(validateToken.user),
+        refresh_token: this.tokenService.generateRefreshToken(
+          req,
+          validateToken.user,
         ),
       };
+
       return data;
+    } catch (error) {
+      throwError(error);
+    }
+  }
+
+  async logout(req: Request) {
+    try {
+      const jti = req['user']['jti'];
+      const validateToken = await this.prisma.user_auth.findFirst({
+        include: { user: true },
+        where: {
+          jti,
+          is_active: true,
+          deleted_at: null,
+        },
+      });
+
+      if (!validateToken) throw new UnauthorizedException('Invalid token!');
+
+      await this.prisma.user_auth.updateMany({
+        data: {
+          is_active: false,
+        },
+        where: {
+          jti,
+        },
+      });
+      return 'Successfully Logout!';
     } catch (error) {
       throwError(error);
     }

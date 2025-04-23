@@ -3,15 +3,18 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   HttpStatus,
+  Put,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { BaseResponse } from 'src/common/dto/base-response.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('user')
 export class UserController {
@@ -29,17 +32,21 @@ export class UserController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  @UseGuards(JwtAuthGuard)
+  async findOne(@Req() req: Request, @Param('id') id: string) {
+    const result = await this.userService.findOne(+id);
+    return new BaseResponse(result, 'Get user successfull', HttpStatus.OK);
   }
 
-  @Patch(':id')
+  @Put(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+    const result = await this.userService.update(+id, updateUserDto);
+    return new BaseResponse(result, 'Update user successfull', HttpStatus.OK);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+    const result = await this.userService.remove(+id);
+    return new BaseResponse(result, 'Delete  user successfull', HttpStatus.OK);
   }
 }

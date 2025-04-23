@@ -30,6 +30,11 @@
 
 ```bash
 $ npm install
+
+# run if there is no table in the database
+$ npx prisma migrate dev
+
+$ npx prisma generate
 ```
 
 ## Running the app
