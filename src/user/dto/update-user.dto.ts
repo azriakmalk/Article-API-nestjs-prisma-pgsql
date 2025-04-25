@@ -1,6 +1,6 @@
-import { CreateUserDto } from './create-user.dto';
-import { IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNumber } from 'class-validator';
+import { CreateUserDto } from '.';
 
 export class UpdateUserDto extends CreateUserDto {
   @IsNumber()

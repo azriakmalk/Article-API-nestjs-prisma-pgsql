@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { user } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { throwError } from 'src/common/utils/throw-error.util';
+import { throwError } from 'src/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { HttpException } from '@nestjs/common';
-import { ServiceException } from '../exceptions/service-exception';
+import { ServiceException } from '../exceptions';
 
 export function throwError(error: any): never {
   console.error('[Service Error]', {

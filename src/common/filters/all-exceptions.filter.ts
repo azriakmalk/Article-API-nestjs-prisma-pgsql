@@ -24,7 +24,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exception.getResponse()
         : { message: 'Internal server error', errorCode: 'INTERNAL_ERROR' };
 
-    const message = typeof res === 'string' ? res : res['message'];
+    const message =
+      typeof res === 'string'
+        ? res
+        : Array.isArray(res['message'])
+          ? res['message'][0]
+          : res['message'];
     // const errorCode =
     //   typeof res === 'object'
     //     ? res['errorCode'] || 'UNKNOWN_ERROR'

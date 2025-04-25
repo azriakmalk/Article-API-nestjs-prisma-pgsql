@@ -5,8 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { TokenService } from './token.service';
-import { JwtStrategy } from './strategys/jwt-auth.strategy';
-import { JwtRefreshStrategy } from './strategys/jwt-refresh.strategy';
+import { JwtRefreshStrategy, JwtStrategy } from './strategys';
 
 @Module({
   imports: [JwtModule.register({})],

@@ -5,14 +5,16 @@ import {
   Post,
   Req,
   UseGuards,
+  UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from './auth.dto';
-import { BaseResponse } from 'src/common/dto/base-response.dto';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+import { JwtRefreshGuard } from './guards';
+import { LoginDto } from './dto';
+import { BaseResponse } from 'src/common';
 
 @Controller('auth')
+@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
