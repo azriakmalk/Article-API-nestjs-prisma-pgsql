@@ -9,16 +9,17 @@ datasource db {
 }
 
 model user {
-  id         BigInt      @id @default(autoincrement())
-  name       String      @db.VarChar(255)
-  username   String      @db.VarChar(255)
-  email      String      @db.VarChar(255)
-  password   String      @db.VarChar(255)
-  created_at DateTime?   @default(now())
-  updated_at DateTime?   @updatedAt
-  deleted_at DateTime?   @db.Timestamp(0)
-  user_role  user_role[]
-  user_auth  user_auth[]
+  id            BigInt         @id @default(autoincrement())
+  name          String         @db.VarChar(255)
+  username      String         @db.VarChar(255)
+  email         String         @db.VarChar(255)
+  password      String         @db.VarChar(255)
+  created_at    DateTime?      @default(now())
+  updated_at    DateTime?      @updatedAt
+  deleted_at    DateTime?      @db.Timestamp(0)
+  user_role     user_role[]
+  user_auth     user_auth[]
+  article_likes article_like[]
 }
 
 model user_auth {
@@ -36,9 +37,7 @@ model user_auth {
 
   user user @relation(fields: [user_id], references: [id])
 
-  @@index([user_id])
-  @@index([jti])
-  @@index([refresh_token])
+  @@index([user_id, jti, refresh_token])
 }
 
 model role {
@@ -60,5 +59,48 @@ model user_role {
   role       role      @relation(fields: [role_id], references: [id])
 
   @@id([user_id, role_id])
-  @@map("user_roles")
+}
+
+model article {
+  id            BigInt          @id @default(autoincrement())
+  user_id       BigInt
+  title         String          @db.VarChar(255)
+  body          String          @db.Text()
+  created_at    DateTime?       @default(now())
+  updated_at    DateTime?       @updatedAt
+  deleted_at    DateTime?       @db.Timestamp(0)
+  article_likes article_like[]
+  article_files article_files[]
+}
+
+model article_like {
+  user_id    BigInt
+  article_id BigInt
+  isLiked    Boolean
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+  deleted_at DateTime? @db.Timestamp(0)
+  user       user      @relation(fields: [user_id], references: [id])
+  article    article   @relation(fields: [article_id], references: [id])
+
+  @@id([user_id, article_id])
+  @@index([user_id, article_id])
+}
+
+model article_files {
+  id            BigInt    @id @default(autoincrement())
+  article_id    BigInt
+  original_name String    @db.VarChar
+  encoding      String    @db.VarChar
+  mime_type     String    @db.VarChar
+  destination   String?   @db.VarChar
+  file_name     String?   @db.VarChar
+  path          String?   @db.VarChar
+  size          Int?      @db.Integer
+  key           String?   @db.VarChar
+  url           String?   @db.VarChar
+  created_at    DateTime? @default(now())
+  updated_at    DateTime? @updatedAt
+  deleted_at    DateTime? @db.Timestamp(0)
+  article       article   @relation(fields: [article_id], references: [id])
 }
